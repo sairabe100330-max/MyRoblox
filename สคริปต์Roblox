@@ -1,0 +1,287 @@
+-- ==============================================
+-- SunnyHub V1.4
+-- ธีม: แดง-ดำ เรืองแสง
+-- ฟีเจอร์: วิ่งเร็ว + กระโดดสูง
+-- ==============================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui", 10) or game:GetService("CoreGui")
+
+-- ป้องกันรันซ้ำ
+local env = getgenv()
+if env.SunnyHub_Loaded then return end
+env.SunnyHub_Loaded = true
+
+-- 🎨 ธีมสี ตรงแบบที่วาด
+local Theme = {
+    MainBG = Color3.fromRGB(18, 18, 18),
+    SideBar = Color3.fromRGB(45, 8, 8),
+    SideGradient = Color3.fromRGB(220, 20, 20),
+    HeaderBG = Color3.fromRGB(30, 5, 5),
+    HeaderRed = Color3.fromRGB(190, 10, 10),
+    GlowRed = Color3.fromRGB(255, 30, 80),
+    TextPink = Color3.fromRGB(255, 20, 120),
+    TextWhite = Color3.fromRGB(230, 230, 230),
+    Border = Color3.fromRGB(0, 0, 0),
+    ButtonMin = Color3.fromRGB(0, 220, 30),
+    ButtonClose = Color3.fromRGB(220, 20, 20)
+}
+
+-- ⚙️ ตั้งค่า
+local Settings = {
+    SpeedEnabled = false,
+    WalkSpeed = 60,
+    JumpEnabled = false,
+    JumpPower = 150
+}
+local Original = {Speed = 16, Jump = 50}
+local Character, Humanoid
+
+-- 🎬 แอนิเมชัน
+local TweenFast = TweenInfo.new(0.15, Enum.EasingStyle.Quad)
+local TweenNorm = TweenInfo.new(0.25, Enum.EasingStyle.Quad)
+
+-- 🖼️ สร้างหน้าจอ
+local SG = Instance.new("ScreenGui")
+SG.Name = "SunnyHub_V1_4"
+SG.ResetOnSpawn = false
+SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+SG.Parent = PlayerGui
+
+-- กรอบหลัก
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 580, 0, 440)
+Main.Position = UDim2.new(0.5, -290, 0.5, -220)
+Main.BackgroundColor3 = Theme.MainBG
+Main.BorderSizePixel = 3
+Main.BorderColor3 = Theme.Border
+Main.Active = true
+Main.Draggable = true
+Main.ClipsDescendants = true
+Main.Parent = SG
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+
+-- แถบหัว
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 55)
+Header.BackgroundColor3 = Theme.HeaderBG
+Header.BorderSizePixel = 2
+Header.BorderColor3 = Theme.Border
+Header.Parent = Main
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 6)
+
+-- ส่วนซ้ายหัว
+local HeadLeft = Instance.new("Frame")
+HeadLeft.Size = UDim2.new(0.26, -2, 1, 0)
+HeadLeft.BackgroundColor3 = Theme.HeaderRed
+HeadLeft.BorderSizePixel = 2
+HeadLeft.BorderColor3 = Theme.Border
+HeadLeft.Parent = Header
+Instance.new("UICorner", HeadLeft).CornerRadius = UDim.new(0, 5)
+
+local HeadLeftTxt = Instance.new("TextLabel")
+HeadLeftTxt.Size = UDim2.new(1, 0, 1, 0)
+HeadLeftTxt.BackgroundTransparency = 1
+HeadLeftTxt.Text = "สคริปต์ นัด V1.4"
+HeadLeftTxt.Font = Enum.Font.GothamBold
+HeadLeftTxt.TextSize = 16
+HeadLeftTxt.TextColor3 = Theme.TextPink
+HeadLeftTxt.Parent = HeadLeft
+
+-- ส่วนกลางหัว
+local HeadMid = Instance.new("Frame")
+HeadMid.Size = UDim2.new(0.48, -2, 1, 0)
+HeadMid.Position = UDim2.new(0.26, 2, 0, 0)
+HeadMid.BackgroundColor3 = Theme.HeaderRed
+HeadMid.BorderSizePixel = 2
+HeadMid.BorderColor3 = Theme.Border
+HeadMid.Parent = Header
+Instance.new("UICorner", HeadMid).CornerRadius = UDim.new(0, 5)
+
+local HeadMidTxt = Instance.new("TextLabel")
+HeadMidTxt.Size = UDim2.new(1, 0, 1, 0)
+HeadMidTxt.BackgroundTransparency = 1
+HeadMidTxt.Text = "SunnyHub"
+HeadMidTxt.Font = Enum.Font.GothamBlack
+HeadMidTxt.TextSize = 24
+HeadMidTxt.TextColor3 = Theme.GlowRed
+HeadMidTxt.Parent = HeadMid
+
+-- ส่วนขวาปุ่ม
+local HeadRight = Instance.new("Frame")
+HeadRight.Size = UDim2.new(0.26, -2, 1, 0)
+HeadRight.Position = UDim2.new(0.74, 2, 0, 0)
+HeadRight.BackgroundColor3 = Theme.HeaderBG
+HeadRight.BorderSizePixel = 2
+HeadRight.BorderColor3 = Theme.Border
+HeadRight.Parent = Header
+Instance.new("UICorner", HeadRight).CornerRadius = UDim.new(0, 5)
+
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(0.22, 0, 0.5, -15)
+MinBtn.BackgroundColor3 = Theme.ButtonMin
+MinBtn.Text = "—"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+MinBtn.TextColor3 = Theme.TextWhite
+MinBtn.BorderSizePixel = 0
+MinBtn.Parent = HeadRight
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 4)
+
+local CloseBtn = MinBtn:Clone()
+CloseBtn.Position = UDim2.new(0.58, 0, 0.5, -15)
+CloseBtn.Text = "✕"
+CloseBtn.BackgroundColor3 = Theme.ButtonClose
+CloseBtn.Parent = HeadRight
+
+-- แถบเมนูซ้าย
+local SideBar = Instance.new("Frame")
+SideBar.Size = UDim2.new(0.26, -5, 1, -65)
+SideBar.Position = UDim2.new(0, 5, 0, 60)
+SideBar.BackgroundColor3 = Theme.SideBar
+SideBar.BorderSizePixel = 2
+SideBar.BorderColor3 = Theme.Border
+SideBar.Parent = Main
+Instance.new("UICorner", SideBar).CornerRadius = UDim.new(0, 6)
+
+-- ไล่สีแถบซ้าย
+local SideGrad = Instance.new("UIGradient", SideBar)
+SideGrad.Color = ColorSequence.new(Theme.SideBar, Theme.SideGradient)
+SideGrad.Rotation = 90
+
+-- พื้นที่เนื้อหา
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(0.74, -10, 1, -65)
+Content.Position = UDim2.new(0.26, 5, 0, 60)
+Content.BackgroundColor3 = Theme.MainBG
+Content.BorderSizePixel = 2
+Content.BorderColor3 = Theme.Border
+Content.Parent = Main
+Instance.new("UICorner", Content).CornerRadius = UDim.new(0, 6)
+
+-- 📌 ฟีเจอร์ วิ่งเร็ว + กระโดดสูง
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -20, 0, 35)
+Title.Position = UDim2.new(0, 10, 0, 10)
+Title.BackgroundTransparency = 1
+Title.Text = "⚙️ ฟีเจอร์พื้นฐาน"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 19
+Title.TextColor3 = Theme.GlowRed
+Title.Parent = Content
+
+-- ปุ่มวิ่งเร็ว
+local SpeedBtn = Instance.new("TextButton")
+SpeedBtn.Size = UDim2.new(1, -25, 0, 48)
+SpeedBtn.Position = UDim2.new(0, 12, 0, 55)
+SpeedBtn.BackgroundColor3 = Theme.SideBar
+SpeedBtn.BorderSizePixel = 1
+SpeedBtn.BorderColor3 = Theme.GlowRed
+SpeedBtn.Font = Enum.Font.GothamBold
+SpeedBtn.TextSize = 16
+SpeedBtn.Text = "🔘 เปิดวิ่งเร็ว"
+SpeedBtn.TextColor3 = Theme.TextWhite
+SpeedBtn.AutoButtonColor = false
+Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 6)
+SpeedBtn.Parent = Content
+
+-- แถบปรับความเร็ว
+local SpeedBG = Instance.new("Frame")
+SpeedBG.Size = UDim2.new(1, -40, 0, 16)
+SpeedBG.Position = UDim2.new(0, 20, 0, 110)
+SpeedBG.BackgroundColor3 = Color3.fromRGB(35, 10, 10)
+SpeedBG.BorderSizePixel = 0
+Instance.new("UICorner", SpeedBG).CornerRadius = UDim.new(0, 8)
+SpeedBG.Parent = Content
+
+local SpeedFill = Instance.new("Frame")
+SpeedFill.Size = UDim2.new(0, (Settings.WalkSpeed/200)*SpeedBG.AbsoluteSize.X, 1, 0)
+SpeedFill.BackgroundColor3 = Theme.GlowRed
+SpeedFill.Parent = SpeedBG
+Instance.new("UICorner", SpeedFill).CornerRadius = UDim.new(0, 8)
+
+local SpeedTxt = Instance.new("TextLabel")
+SpeedTxt.Size = UDim2.new(1, 0, 0, 22)
+SpeedTxt.Position = UDim2.new(0, 0, 0, 130)
+SpeedTxt.BackgroundTransparency = 1
+SpeedTxt.Text = "ความเร็ว: "..Settings.WalkSpeed
+SpeedTxt.Font = Enum.Font.Gotham
+SpeedTxt.TextSize = 14
+SpeedTxt.TextColor3 = Theme.TextWhite
+SpeedTxt.Parent = Content
+
+-- ปุ่มกระโดดสูง
+local JumpBtn = SpeedBtn:Clone()
+JumpBtn.Position = UDim2.new(0, 12, 0, 160)
+JumpBtn.Text = "🔘 เปิดกระโดดสูง"
+JumpBtn.Parent = Content
+
+-- แถบปรับกระโดด
+local JumpBG = SpeedBG:Clone()
+JumpBG.Position = UDim2.new(0, 20, 0, 215)
+JumpBG.Parent = Content
+
+local JumpFill = SpeedFill:Clone()
+JumpFill.Size = UDim2.new(0, (Settings.JumpPower/600)*JumpBG.AbsoluteSize.X, 1, 0)
+JumpFill.Parent = JumpBG
+
+local JumpTxt = SpeedTxt:Clone()
+JumpTxt.Position = UDim2.new(0, 0, 0, 235)
+JumpTxt.Text = "พลังกระโดด: "..Settings.JumpPower
+JumpTxt.Parent = Content
+
+-- 🎯 ระบบทำงาน
+local function RefreshChar()
+    Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    Humanoid = Character:WaitForChild("Humanoid", 10)
+    Original.Speed = Humanoid.WalkSpeed
+    Original.Jump = Humanoid.JumpPower
+end
+RefreshChar()
+LocalPlayer.CharacterAdded:Connect(RefreshChar)
+
+-- กดเปิด/ปิด
+SpeedBtn.MouseButton1Click:Connect(function()
+    Settings.SpeedEnabled = not Settings.SpeedEnabled
+    SpeedBtn.Text = Settings.SpeedEnabled and "✅ ปิดวิ่งเร็ว" or "🔘 เปิดวิ่งเร็ว"
+    SpeedBtn.BackgroundColor3 = Settings.SpeedEnabled and Theme.GlowRed or Theme.SideBar
+end)
+
+JumpBtn.MouseButton1Click:Connect(function()
+    Settings.JumpEnabled = not Settings.JumpEnabled
+    JumpBtn.Text = Settings.JumpEnabled and "✅ ปิดกระโดดสูง" or "🔘 เปิดกระโดดสูง"
+    JumpBtn.BackgroundColor3 = Settings.JumpEnabled and Theme.GlowRed or Theme.SideBar
+end)
+
+-- ลูปอัปเดตค่า
+RunService.Heartbeat:Connect(function()
+    if not Humanoid or Humanoid.Health <= 0 then return end
+    Humanoid.WalkSpeed = Settings.SpeedEnabled and Settings.WalkSpeed or Original.Speed
+    Humanoid.JumpPower = Settings.JumpEnabled and Settings.JumpPower or Original.Jump
+end)
+
+-- ปุ่มย่อ/ปิด
+local Minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    Minimized = not Minimized
+    TweenService:Create(Main, TweenNorm, {Size = Minimized and UDim2.new(0,580,0,55) or UDim2.new(0,580,0,440)}):Play()
+    SideBar.Visible = not Minimized
+    Content.Visible = not Minimized
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    TweenService:Create(Main, TweenNorm, {BackgroundTransparency = 1, Size = UDim2.new(0,0,0,0)}):Play()
+    task.wait(0.25)
+    if Humanoid then
+        Humanoid.WalkSpeed = Original.Speed
+        Humanoid.JumpPower = Original.Jump
+    end
+    env.SunnyHub_Loaded = nil
+    SG:Destroy()
+end)
