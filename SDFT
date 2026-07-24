@@ -1,0 +1,468 @@
+-- ==============================================
+-- SunnyHub | เพิ่มฟีเจอร์ใหม่ครบถ้วน
+-- 🔒 ออโต้ล็อกฐาน (135 วินาที)
+-- ⬆️ ออโต้อัพเกรด
+-- 🎯 ออโต้ยิงตรงเป้าหมาย
+-- 💥 เลือกจุดยิง 1-8 (กดครั้งเดียว ยิงครั้งเดียว)
+-- 🏃‍♂️ วิ่งเร็ว / เดินทะลุ / ออร่า / ลบหมอก / ภาพชัด
+-- ✅ ย่อ-ขยายกดครั้งเดียว
+-- ==============================================
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TopBar = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local MinBtn = Instance.new("TextButton")
+local CloseBtn = Instance.new("TextButton")
+local ContentFrame = Instance.new("Frame")
+
+-- ปุ่มฟีเจอร์หลักเดิม
+local AutoLockBtn = Instance.new("TextButton")
+local AutoUpgradeBtn = Instance.new("TextButton")
+local AutoShootBtn = Instance.new("TextButton")
+local AutoClearBtn = Instance.new("TextButton")
+
+-- ปุ่มฟีเจอร์ใหม่
+local SpeedBtn = Instance.new("TextButton")
+local NoclipBtn = Instance.new("TextButton")
+local AuraBtn = Instance.new("TextButton")
+local FogBtn = Instance.new("TextButton")
+local BrightBtn = Instance.new("TextButton")
+
+-- เมนูย่อยเลือกจุด
+local ClearMenu = Instance.new("Frame")
+local MenuTitle = Instance.new("TextLabel")
+local CloseMenuBtn = Instance.new("TextButton")
+local AllBtn = Instance.new("TextButton")
+
+-- ตัวแปรระบบ
+local AutoLockActive = false
+local AutoUpgradeActive = false
+local AutoShootActive = false
+local ClearMenuOpen = false
+local SpeedActive = false
+local NoclipActive = false
+local AuraActive = false
+local FogActive = false
+local BrightActive = false
+local AuraParts = {}
+
+-- บริการ
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+
+-- รีโมท
+local LockEvent = game:GetService("ReplicatedStorage"):WaitForChild("NukeRemotes"):WaitForChild("RequestLockBase")
+local UpgradeEvent = game:GetService("ReplicatedStorage"):WaitForChild("NukeRemotes"):WaitForChild("PurchaseUpgrade")
+local LaunchConf = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Remotes"):WaitForChild("Networking"):WaitForChild("RE/Launch/LaunchConfirm")
+
+-- เวลาและพิกัด
+local LOCK_INTERVAL = 135
+local TARGET_POS = Vector3.new(422.5500793457, 12.983993530273, 127.49764251709)
+local CLEAR_POSITIONS = {
+    Vector3.new(247.58973693848, 12.5, 126.70404052734), -- 1
+    Vector3.new(292.12060546875, 12.5, 256.35577392578), -- 2
+    Vector3.new(412.31442260742, 12.5, 300.49255371094), -- 3
+    Vector3.new(541.17797851562, 12.5, 246.50379943848), -- 4
+    Vector3.new(587.28515625, 12.5, 120.79286193848), -- 5
+    Vector3.new(539.99578857422, 12.5, 2.9634790420532), -- 6
+    Vector3.new(409.94998168945, 12.5, -50.631164550781), -- 7
+    Vector3.new(292.45281982422, 21.09294128418, 6.1220684051514) -- 8
+}
+
+-- คุณสมบัติหลัก UI
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 999
+ScreenGui.IgnoreGuiInset = true
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
+MainFrame.Position = UDim2.new(0.05, 0, 0.1, 0)
+MainFrame.Size = UDim2.new(0, 450, 0, 620) -- ขยายรองรับปุ่มใหม่
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+TopBar.Size = UDim2.new(1, 0, 0, 50)
+
+Title.Name = "Title"
+Title.Parent = TopBar
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, -80, 1, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "SunnyHub"
+Title.TextColor3 = Color3.fromRGB(0, 0, 255)
+Title.TextSize = 28
+Title.TextXAlignment = Enum.TextXAlignment.Center
+
+MinBtn.Name = "MinBtn"
+MinBtn.Parent = TopBar
+MinBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MinBtn.Position = UDim2.new(0.8, 0, 0.1, 0)
+MinBtn.Size = UDim2.new(0, 35, 0, 35)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.Text = "—"
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinBtn.TextSize = 22
+
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Parent = TopBar
+CloseBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+CloseBtn.Position = UDim2.new(0.9, 0, 0.1, 0)
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+CloseBtn.TextSize = 22
+
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position = UDim2.new(0, 0, 0, 50)
+ContentFrame.Size = UDim2.new(1, 0, 0, 570)
+
+-- ========== ปุ่มฟีเจอร์เดิม ==========
+AutoLockBtn.Parent = ContentFrame
+AutoLockBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+AutoLockBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AutoLockBtn.Position = UDim2.new(0.05, 0, 0.02, 0)
+AutoLockBtn.Size = UDim2.new(0.9, 0, 0, 40)
+AutoLockBtn.Font = Enum.Font.GothamBold
+AutoLockBtn.Text = "🔒 ออโต้ล็อกฐาน"
+AutoLockBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+AutoLockBtn.TextSize = 16
+
+AutoUpgradeBtn.Parent = ContentFrame
+AutoUpgradeBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+AutoUpgradeBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AutoUpgradeBtn.Position = UDim2.new(0.05, 0, 0.11, 0)
+AutoUpgradeBtn.Size = UDim2.new(0.9, 0, 0, 40)
+AutoUpgradeBtn.Font = Enum.Font.GothamBold
+AutoUpgradeBtn.Text = "⬆️ ออโต้อัพเกรด"
+AutoUpgradeBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+AutoUpgradeBtn.TextSize = 16
+
+AutoShootBtn.Parent = ContentFrame
+AutoShootBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+AutoShootBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AutoShootBtn.Position = UDim2.new(0.05, 0, 0.20, 0)
+AutoShootBtn.Size = UDim2.new(0.9, 0, 0, 40)
+AutoShootBtn.Font = Enum.Font.GothamBold
+AutoShootBtn.Text = "🎯 ยิงตรงเป้าหมาย"
+AutoShootBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+AutoShootBtn.TextSize = 16
+
+AutoClearBtn.Parent = ContentFrame
+AutoClearBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+AutoClearBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AutoClearBtn.Position = UDim2.new(0.05, 0, 0.29, 0)
+AutoClearBtn.Size = UDim2.new(0.9, 0, 0, 40)
+AutoClearBtn.Font = Enum.Font.GothamBold
+AutoClearBtn.Text = "💥 เลือกจุดยิงพื้นที่"
+AutoClearBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+AutoClearBtn.TextSize = 16
+
+-- ========== ปุ่มฟีเจอร์ใหม่ ==========
+SpeedBtn.Parent = ContentFrame
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+SpeedBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBtn.Position = UDim2.new(0.05, 0, 0.38, 0)
+SpeedBtn.Size = UDim2.new(0.9, 0, 0, 40)
+SpeedBtn.Font = Enum.Font.GothamBold
+SpeedBtn.Text = "🏃‍♂️ วิ่งเร็ว"
+SpeedBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+SpeedBtn.TextSize = 16
+
+NoclipBtn.Parent = ContentFrame
+NoclipBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+NoclipBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+NoclipBtn.Position = UDim2.new(0.05, 0, 0.47, 0)
+NoclipBtn.Size = UDim2.new(0.9, 0, 0, 40)
+NoclipBtn.Font = Enum.Font.GothamBold
+NoclipBtn.Text = "🧱 เดินทะลุ"
+NoclipBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+NoclipBtn.TextSize = 16
+
+AuraBtn.Parent = ContentFrame
+AuraBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+AuraBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AuraBtn.Position = UDim2.new(0.05, 0, 0.56, 0)
+AuraBtn.Size = UDim2.new(0.9, 0, 0, 40)
+AuraBtn.Font = Enum.Font.GothamBold
+AuraBtn.Text = "✨ ออร่าตัวละคร"
+AuraBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+AuraBtn.TextSize = 16
+
+FogBtn.Parent = ContentFrame
+FogBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+FogBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+FogBtn.Position = UDim2.new(0.05, 0, 0.65, 0)
+FogBtn.Size = UDim2.new(0.9, 0, 0, 40)
+FogBtn.Font = Enum.Font.GothamBold
+FogBtn.Text = "🌫️ ลบหมอก"
+FogBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+FogBtn.TextSize = 16
+
+BrightBtn.Parent = ContentFrame
+BrightBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+BrightBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+BrightBtn.Position = UDim2.new(0.05, 0, 0.74, 0)
+BrightBtn.Size = UDim2.new(0.9, 0, 0, 40)
+BrightBtn.Font = Enum.Font.GothamBold
+BrightBtn.Text = "👁️ ภาพชัดเจนขึ้น"
+BrightBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+BrightBtn.TextSize = 16
+
+-- 📋 เมนูย่อยเลือกจุด
+ClearMenu.Name = "ClearMenu"
+ClearMenu.Parent = ScreenGui
+ClearMenu.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ClearMenu.BorderColor3 = Color3.fromRGB(0, 255, 0)
+ClearMenu.Position = UDim2.new(0.72, 0, 0.12, 0)
+ClearMenu.Size = UDim2.new(0, 180, 0, 320)
+ClearMenu.Visible = false
+
+MenuTitle.Parent = ClearMenu
+MenuTitle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+MenuTitle.Size = UDim2.new(1, 0, 0, 35)
+MenuTitle.Font = Enum.Font.GothamBold
+MenuTitle.Text = "เลือกจุด 1 / 8"
+MenuTitle.TextColor3 = Color3.fromRGB(0, 0, 255)
+MenuTitle.TextSize = 16
+MenuTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+CloseMenuBtn.Parent = ClearMenu
+CloseMenuBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseMenuBtn.Position = UDim2.new(0.8, 0, 0, 0)
+CloseMenuBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseMenuBtn.Font = Enum.Font.GothamBold
+CloseMenuBtn.Text = "✕"
+CloseMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseMenuBtn.TextSize = 18
+
+AllBtn.Parent = ClearMenu
+AllBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+AllBtn.Position = UDim2.new(0.05, 0, 0.12, 0)
+AllBtn.Size = UDim2.new(0.9, 0, 0, 30)
+AllBtn.Font = Enum.Font.Gotham
+AllBtn.Text = "✨ ยิงทั้งหมด 1 ครั้ง"
+AllBtn.TextColor3 = Color3.fromRGB(0, 0, 255)
+AllBtn.TextSize = 14
+
+-- สร้างปุ่มเลข 1-8
+for i = 1, 8 do
+    local btn = Instance.new("TextButton")
+    btn.Parent = ClearMenu
+    btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    btn.Position = UDim2.new(0.05, 0, 0.18 + ((i-1)*0.085), 0)
+    btn.Size = UDim2.new(0.9, 0, 0, 25)
+    btn.Font = Enum.Font.Gotham
+    btn.Text = "📍 จุดที่ "..i
+    btn.TextColor3 = Color3.fromRGB(0, 0, 255)
+    btn.TextSize = 14
+
+    local function ShootPoint()
+        pcall(function()
+            LaunchConf:FireServer(CLEAR_POSITIONS[i])
+            print("✅ ยิงจุดที่ "..i.." สำเร็จ!")
+        end)
+    end
+
+    btn.MouseButton1Click:Connect(ShootPoint)
+    btn.TouchTap:Connect(ShootPoint)
+end
+
+local function ShootAllOnce()
+    task.spawn(function()
+        for i = 1, 8 do
+            pcall(function() LaunchConf:FireServer(CLEAR_POSITIONS[i]) end)
+            task.wait(0.7)
+        end
+        print("✅ ยิงครบ 8 จุดแล้ว!")
+    end)
+end
+AllBtn.MouseButton1Click:Connect(ShootAllOnce)
+AllBtn.TouchTap:Connect(ShootAllOnce)
+
+-- ✅ ระบบย่อ-ขยาย
+local Minimized = false
+local function ToggleMinimize()
+    Minimized = not Minimized
+    if Minimized then
+        MainFrame.Size = UDim2.new(0, 450, 0, 50)
+        ContentFrame.Visible = false
+        ClearMenu.Visible = false
+        MinBtn.Text = "▢"
+    else
+        MainFrame.Size = UDim2.new(0, 450, 0, 620)
+        ContentFrame.Visible = true
+        MinBtn.Text = "—"
+    end
+end
+MinBtn.MouseButton1Click:Connect(ToggleMinimize)
+MinBtn.TouchTap:Connect(ToggleMinimize)
+
+-- ปิดสคริปต์
+local function CloseUI()
+    ScreenGui:Destroy()
+    AutoLockActive = false
+    AutoUpgradeActive = false
+    AutoShootActive = false
+    SpeedActive = false
+    NoclipActive = false
+    AuraActive = false
+    FogActive = false
+    BrightActive = false
+    -- คืนค่าแสง
+    Lighting.Fog.Enabled = true
+    Lighting.Brightness = 2
+    Lighting.ColorShiftTop = Color3.new(1,1,1)
+    Lighting.ColorShiftBottom = Color3.new(0.5,0.5,0.5)
+    -- ลบออร่า
+    for _,v in next,AuraParts do v:Destroy() end
+    AuraParts = {}
+end
+CloseBtn.MouseButton1Click:Connect(CloseUI)
+CloseBtn.TouchTap:Connect(CloseUI)
+
+-- เปิด-ปิดเมนูจุด
+AutoClearBtn.MouseButton1Click:Connect(function() ClearMenuOpen = not ClearMenuOpen; ClearMenu.Visible = ClearMenuOpen end)
+AutoClearBtn.TouchTap:Connect(function() ClearMenuOpen = not ClearMenuOpen; ClearMenu.Visible = ClearMenuOpen end)
+CloseMenuBtn.MouseButton1Click:Connect(function() ClearMenu.Visible = false; ClearMenuOpen = false end)
+CloseMenuBtn.TouchTap:Connect(function() ClearMenu.Visible = false; ClearMenuOpen = false end)
+
+-- 🚀 ระบบเดิม
+local function AutoLockLoop()
+    while AutoLockActive do
+        pcall(function() LockEvent:FireServer() end)
+        task.wait(LOCK_INTERVAL)
+    end
+end
+local function AutoUpgradeLoop()
+    while AutoUpgradeActive do
+        pcall(function() UpgradeEvent:FireServer("TIER") end)
+        task.wait(2)
+    end
+end
+local function AutoShootLoop()
+    while AutoShootActive do
+        pcall(function() LaunchConf:FireServer(TARGET_POS) end)
+        task.wait(3)
+    end
+end
+
+-- 🚀 ระบบฟีเจอร์ใหม่
+-- วิ่งเร็ว
+local function ToggleSpeed()
+    SpeedActive = not SpeedActive
+    SpeedBtn.Text = SpeedActive and "🏃‍♂️ ปิด วิ่งเร็ว" or "🏃‍♂️ เปิด วิ่งเร็ว"
+    SpeedBtn.BackgroundColor3 = SpeedActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0)
+    local Char = LocalPlayer.Character
+    if Char and Char:FindFirstChild("Humanoid") then
+        Char.Humanoid.WalkSpeed = SpeedActive and 50 or 16
+    end
+end
+
+-- เดินทะลุ
+RunService.Stepped:Connect(function()
+    if NoclipActive then
+        local Char = LocalPlayer.Character
+        if Char and Char:FindFirstChild("Humanoid") then
+            for _,v in next,Char:GetChildren() do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
+        end
+    end
+end)
+local function ToggleNoclip()
+    NoclipActive = not NoclipActive
+    NoclipBtn.Text = NoclipActive and "🧱 ปิด เดินทะลุ" or "🧱 เปิด เดินทะลุ"
+    NoclipBtn.BackgroundColor3 = NoclipActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0)
+end
+
+-- ออร่า
+local function UpdateAura()
+    while AuraActive do
+        local Char = LocalPlayer.Character
+        if Char and Char:FindFirstChild("HumanoidRootPart") then
+            local Root = Char.HumanoidRootPart
+            for _,v in next,AuraParts do v:Destroy() end
+            AuraParts = {}
+            for i=1,6 do
+                local Orbit = Instance.new("Part")
+                Orbit.Shape = Enum.PartType.Ball
+                Orbit.Size = Vector3.new(1,1,1)
+                Orbit.Transparency = 0.3
+                Orbit.Color = Color3.fromRGB(0,255,255)
+                Orbit.Material = Enum.Material.Neon
+                Orbit.CanCollide = false
+                Orbit.Anchored = true
+                Orbit.Parent = workspace
+                table.insert(AuraParts, Orbit)
+            end
+        end
+        task.wait(0.1)
+    end
+    for _,v in next,AuraParts do v:Destroy() end
+    AuraParts = {}
+end
+local function ToggleAura()
+    AuraActive = not AuraActive
+    AuraBtn.Text = AuraActive and "✨ ปิด ออร่า" or "✨ เปิด ออร่า"
+    AuraBtn.BackgroundColor3 = AuraActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0)
+    if AuraActive then task.spawn(UpdateAura) end
+end
+
+-- ลบหมอก
+local function ToggleFog()
+    FogActive = not FogActive
+    FogBtn.Text = FogActive and "🌫️ คืนค่าหมอก" or "🌫️ ลบหมอก"
+    FogBtn.BackgroundColor3 = FogActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0)
+    Lighting.Fog.Enabled = not FogActive
+    Lighting.Fog.Density = FogActive and 0 or 0.5
+end
+
+-- ภาพชัดเจนขึ้น
+local function ToggleBright()
+    BrightActive = not BrightActive
+    BrightBtn.Text = BrightActive and "👁️ คืนค่าภาพ" or "👁️ ภาพชัดเจนขึ้น"
+    BrightBtn.BackgroundColor3 = BrightActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0)
+    Lighting.Brightness = BrightActive and 4 or 2
+    Lighting.ColorShiftTop = BrightActive and Color3.new(1,1,1) or Color3.new(0.2,0.2,0.2)
+    Lighting.ColorShiftBottom = BrightActive and Color3.new(1,1,1) or Color3.new(0.5,0.5,0.5)
+    Lighting.Ambient = BrightActive and Color3.new(1,1,1) or Color3.new(0.3,0.3,0.3)
+end
+
+-- เชื่อมต่อปุ่ม
+AutoLockBtn.MouseButton1Click:Connect(function() AutoLockActive = not AutoLockActive; AutoLockBtn.Text = AutoLockActive and "🔒 ปิด ล็อกฐาน" or "🔒 เปิด ล็อกฐาน"; AutoLockBtn.BackgroundColor3 = AutoLockActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0); if AutoLockActive then task.spawn(AutoLockLoop) end end)
+AutoLockBtn.TouchTap:Connect(function() AutoLockActive = not AutoLockActive; AutoLockBtn.Text = AutoLockActive and "🔒 ปิด ล็อกฐาน" or "🔒 เปิด ล็อกฐาน"; AutoLockBtn.BackgroundColor3 = AutoLockActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0); if AutoLockActive then task.spawn(AutoLockLoop) end end)
+
+AutoUpgradeBtn.MouseButton1Click:Connect(function() AutoUpgradeActive = not AutoUpgradeActive; AutoUpgradeBtn.Text = AutoUpgradeActive and "⬆️ ปิด อัพเกรด" or "⬆️ เปิด อัพเกรด"; AutoUpgradeBtn.BackgroundColor3 = AutoUpgradeActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0); if AutoUpgradeActive then task.spawn(AutoUpgradeLoop) end end)
+AutoUpgradeBtn.TouchTap:Connect(function() AutoUpgradeActive = not AutoUpgradeActive; AutoUpgradeBtn.Text = AutoUpgradeActive and "⬆️ ปิด อัพเกรด" or "⬆️ เปิด อัพเกรด"; AutoUpgradeBtn.BackgroundColor3 = AutoUpgradeActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0); if AutoUpgradeActive then task.spawn(AutoUpgradeLoop) end end)
+
+AutoShootBtn.MouseButton1Click:Connect(function() AutoShootActive = not AutoShootActive; AutoShootBtn.Text = AutoShootActive and "🎯 ปิด ยิงอัตโนมัติ" or "🎯 เปิด ยิงอัตโนมัติ"; AutoShootBtn.BackgroundColor3 = AutoShootActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0); if AutoShootActive then task.spawn(AutoShootLoop) end end)
+AutoShootBtn.TouchTap:Connect(function() AutoShootActive = not AutoShootActive; AutoShootBtn.Text = AutoShootActive and "🎯 ปิด ยิงอัตโนมัติ" or "🎯 เปิด ยิงอัตโนมัติ"; AutoShootBtn.BackgroundColor3 = AutoShootActive and Color3.fromRGB(255,50,50) or Color3.fromRGB(0,255,0); if AutoShootActive then task.spawn(AutoShootLoop) end end)
+
+SpeedBtn.MouseButton1Click:Connect(ToggleSpeed)
+SpeedBtn.TouchTap:Connect(ToggleSpeed)
+
+NoclipBtn.MouseButton1Click:Connect(ToggleNoclip)
+NoclipBtn.TouchTap:Connect(ToggleNoclip)
+
+AuraBtn.MouseButton1Click:Connect(ToggleAura)
+AuraBtn.TouchTap:Connect(ToggleAura)
+
+FogBtn.MouseButton1Click:Connect(ToggleFog)
+FogBtn.TouchTap:Connect(ToggleFog)
+
+BrightBtn.MouseButton1Click:Connect(ToggleBright)
+BrightBtn.TouchTap:Connect(ToggleBright)
+
+print("✅ เพิ่มฟีเจอร์ครบถ้วนแล้วครับ!")
